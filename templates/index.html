@@ -1,0 +1,431 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<script>
+
+    let summonerName = ''; // Summoner name.
+    let summonerLevel = ''; // 	Summoner level associated with the summoner.
+    let summonerId = ''; // Encrypted summoner ID. Max length 63 characters.
+    let puuId = ''; // Encrypted PUUID. Exact length of 78 characters.
+    let profileIconId = ''; // ID of the summoner icon associated with the summoner.
+
+
+    let summonerSoloQTier = '';
+    let summonerSoloQRank = '';
+    let summonerSoloQLP = '';
+    let summonerSoloQWins = '';
+    let summonerSoloQLosses = '';
+    let summonerSoloQWR = 0.1;
+
+    let summonerFlexQTier = '';
+    let summonerFlexQRank = '';
+    let summonerFlexQLP = '';
+    let summonerFlexQWins = '';
+    let summonerFlexQLosses = '';
+    let summonerFlexQWR = 0.1;
+
+    let top1champ = '';
+    let top2champ = '';
+    let top3champ = '';
+    let top4champ = '';
+
+    async function getData(x) {
+        document.getElementById("summonerRankSoloShow").innerHTML = '';
+        document.getElementById("summonerRankSoloWinsShow").innerHTML = '';
+        document.getElementById("summonerRankSoloWRShow").innerHTML = '';
+        document.getElementById("summonerRankFlexShow").innerHTML = '';
+        document.getElementById("summonerRankFlexWinsShow").innerHTML = '';
+        document.getElementById("summonerRankFlexWRShow").innerHTML = '';
+        document.getElementById("top1champ").innerHTML = '';
+        document.getElementById("top2champ").innerHTML = '';
+        document.getElementById("top3champ").innerHTML = '';
+        document.getElementById("top4champ").innerHTML = '';
+        document.getElementById("champMasteryTxt").innerHTML = 'Champion mastery';
+        document.getElementById("lastMatchesTxt").innerHTML = 'Last matches';
+
+        // get summoner v2
+        let response = await fetch('http://127.0.0.1:5000/getSummoner/' + document.getElementById("h1").value, {
+            method: 'GET'
+        });
+        //
+
+
+
+        if (response.ok) {
+            const data = await response.json();
+
+            summonerName = data.name;
+            summonerLevel = data.summonerLevel;
+            profileIconId = data.profileIconId;
+            puuId = data.puuid;
+            summonerId = data.id;
+            //alert("Summoner " + summonerName + " level: " + summonerLevel)
+            document.getElementById("summonerNameShow").innerHTML = summonerName;
+            document.getElementById("summonerLevelShow").innerHTML = 'Level ' + summonerLevel;
+
+            //upd pfp link sometimes
+            document.getElementById("pfp").innerHTML = '<img src="https://ddragon.leagueoflegends.com/cdn/12.6.1/img/profileicon/' + profileIconId + '.png" width="72" height="72"> ';
+                      
+            //get rank
+            response = await fetch("http://127.0.0.1:5000/getRank/" + summonerId, {
+                method: 'GET'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (JSON.stringify(data) !== '[]') {
+                    if (Object.keys(data).length === 1) {
+                        let qtype = data[0].queueType;
+                        if (qtype === 'RANKED_SOLO_5x5') {
+                            summonerSoloQTier = data[0].tier;
+                            summonerSoloQRank = data[0].rank;
+                            summonerSoloQLP = data[0].leaguePoints;
+                            summonerSoloQWins = data[0].wins;
+                            summonerSoloQLosses = data[0].losses;
+                            summonerSoloQWR = (summonerSoloQWins / (summonerSoloQWins + summonerSoloQLosses)) * 100;
+                            document.getElementById("summonerRankSoloShow").innerHTML = 'SoloQ: ' + summonerSoloQTier + ' ' + summonerSoloQRank + ' ' + summonerSoloQLP + ' LP';
+                            document.getElementById("summonerRankFlexShow").innerHTML = 'FlexQ: Unranked';
+                            document.getElementById("summonerRankSoloWinsShow").innerHTML = summonerSoloQWins + 'W ' + summonerSoloQLosses + 'L';
+                            document.getElementById("summonerRankSoloWRShow").innerHTML = 'Winrate: ' + parseInt(summonerSoloQWR, 10) + '%';
+                            
+                        }
+                        else {
+                            summonerFlexQTier = data[0].tier;
+                            summonerFlexQRank = data[0].rank;
+                            summonerFlexQLP = data[0].leaguePoints;
+                            summonerFlexQWins = data[0].wins;
+                            summonerFlexQLosses = data[0].losses;
+                            summonerFlexQWR = (summonerFlexQWins / (summonerFlexQWins + summonerFlexQLosses)) * 100;
+                            document.getElementById("summonerRankSoloShow").innerHTML = 'SoloQ: Unranked';
+                            document.getElementById("summonerRankFlexShow").innerHTML = 'FlexQ: ' + summonerFlexQTier + ' ' + summonerFlexQRank + ' ' + summonerFlexQLP + ' LP';
+                            document.getElementById("summonerRankFlexWinsShow").innerHTML = summonerFlexQWins + 'W ' + summonerFlexQLosses + 'L';
+                            document.getElementById("summonerRankFlexWRShow").innerHTML = 'Winrate: ' + parseInt(summonerFlexQWR, 10) + '%';
+                        }
+                    }
+                    else {
+                        summonerSoloQTier = data[0].tier;
+                        summonerSoloQRank = data[0].rank;
+                        summonerSoloQLP = data[0].leaguePoints;
+                        summonerSoloQWins = data[0].wins;
+                        summonerSoloQLosses = data[0].losses;
+                        summonerSoloQWR = (summonerSoloQWins / (summonerSoloQWins + summonerSoloQLosses)) * 100;
+                        document.getElementById("summonerRankSoloShow").innerHTML = 'SoloQ: ' + summonerSoloQTier + ' ' + summonerSoloQRank + ' ' + summonerSoloQLP + ' LP';
+                        document.getElementById("summonerRankSoloWinsShow").innerHTML = summonerSoloQWins + 'W ' + summonerSoloQLosses + 'L';
+                        document.getElementById("summonerRankSoloWRShow").innerHTML = 'Winrate: ' + parseInt(summonerSoloQWR, 10) + '%';
+
+                        summonerFlexQTier = data[1].tier;
+                        summonerFlexQRank = data[1].rank;
+                        summonerFlexQLP = data[1].leaguePoints;
+                        summonerFlexQWins = data[1].wins;
+                        summonerFlexQLosses = data[1].losses;
+                        summonerFlexQWR = (summonerFlexQWins / (summonerFlexQWins + summonerFlexQLosses)) * 100;
+                        document.getElementById("summonerRankFlexShow").innerHTML = 'FlexQ: ' + summonerFlexQTier + ' ' + summonerFlexQRank + ' ' + summonerFlexQLP + ' LP';
+                        document.getElementById("summonerRankFlexWinsShow").innerHTML = summonerFlexQWins + 'W ' + summonerFlexQLosses + 'L';
+                        document.getElementById("summonerRankFlexWRShow").innerHTML = 'Winrate: ' + parseInt(summonerFlexQWR, 10) + '%';
+                    }
+                    
+
+                }
+                else {
+                    document.getElementById("summonerRankSoloShow").innerHTML = 'SoloQ: Unranked';
+                    document.getElementById("summonerRankFlexShow").innerHTML = 'FlexQ: Unranked';
+                }
+            }
+            else {
+                alert("Error get rank): " + response.status);
+            }
+
+            //get champs
+            response = await fetch("http://127.0.0.1:5000/getChampions/" + summonerId, {
+                method: 'GET'
+            });
+            if (response.ok) {
+                const data = await response.json();
+
+                let champ1name = await getChampNameFromId(data[0].championId, 0);
+                let champ2name = await getChampNameFromId(data[1].championId, 0);
+                let champ3name = await getChampNameFromId(data[2].championId, 0);
+                let champ4name = await getChampNameFromId(data[3].championId, 0);
+
+                let champ1id = await getChampNameFromId(data[0].championId, 1);
+                let champ2id = await getChampNameFromId(data[1].championId, 1);
+                let champ3id = await getChampNameFromId(data[2].championId, 1);
+                let champ4id = await getChampNameFromId(data[3].championId, 1);
+
+                document.getElementById("ch1").innerHTML = '<img src="https://ddragon.leagueoflegends.com/cdn/12.7.1/img/champion/' + champ1id + '.png" width="72" height="72"> ';
+                document.getElementById("ch2").innerHTML = '<img src="https://ddragon.leagueoflegends.com/cdn/12.7.1/img/champion/' + champ2id + '.png" width="72" height="72"> ';
+                document.getElementById("ch3").innerHTML = '<img src="https://ddragon.leagueoflegends.com/cdn/12.7.1/img/champion/' + champ3id + '.png" width="72" height="72"> ';
+                document.getElementById("ch4").innerHTML = '<img src="https://ddragon.leagueoflegends.com/cdn/12.7.1/img/champion/' + champ4id + '.png" width="72" height="72"> ';
+
+
+                //data[1].championPoints.toString().substring(0, data[1].championPoints.toString().length - 3) + ' ' + data[1].championPoints.toString().substring(data[1].championPoints.length - 3)
+
+
+                document.getElementById("top1champ").innerHTML = champ1name + '<br> Mastery: ' + data[0].championPoints;
+                document.getElementById("top2champ").innerHTML = champ2name + '<br> Mastery: ' + data[1].championPoints;
+                document.getElementById("top3champ").innerHTML = champ3name + '<br> Mastery: ' + data[2].championPoints;
+                document.getElementById("top4champ").innerHTML = champ4name + '<br> Mastery: ' + data[3].championPoints;
+            }
+            //
+            //get last x matches
+            var x = 6;
+            response = await fetch("http://127.0.0.1:5000/getLastMatches/" + puuId + "/" + x, {
+                method: 'GET'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                var matchArray = data // array of last x matches
+                console.log(matchArray);
+                
+                for (const match of matchArray) { // loop through matches
+                    response1 = await fetch("http://127.0.0.1:5000/getMatchData/" + match, {
+                    method: 'GET'
+                    });
+                    if (response1.ok) {
+                        const data1 = await response1.json();
+                        console.log(data1);
+                        var chId = '';
+                        var chN = '';
+
+                        data1.info.participants.forEach(element => { // for each participant in this match
+                            if (element.puuid == puuId) {
+                                chId = element.championId;
+                                chN = element.championName;
+                                console.log(element.championName);
+                            }
+                        });
+                        
+                        var matchHistoryImg = document.createElement('img');
+                        matchHistoryImg.src = 'https://ddragon.leagueoflegends.com/cdn/12.7.1/img/champion/' + chN  + '.png';
+                        matchHistoryImg.style.width = '72px';
+                        matchHistoryImg.style.height = '72px';
+                        document.body.appendChild(matchHistoryImg);
+                    }
+                }
+
+
+                //get match
+                // response1 = await fetch("http://127.0.0.1:5000/getMatchData/" + matchArray[1], {
+                // method: 'GET'
+                // });
+                // if (response1.ok) {
+                //     const data1 = await response1.json();
+                //     console.log(data1);
+                //     var chId = '';
+                //     data1.info.participants.forEach(element => { // for each participant in this match
+                //         if (element.puuid == puuId) {
+                //             chId = element.championId;
+                //             console.log(element.championName);
+                //         }
+                //     });
+                    
+                //     // var matchHistoryImg = document.createElement('img');
+                //     // matchHistoryImg.src = 'https://ddragon.leagueoflegends.com/cdn/12.7.1/img/champion/' + chId  + '.png';
+                // }
+            }
+
+        }
+        else {
+            alert("Error get summoner: " + response.status);
+        }
+    }
+
+    async function getChampNameFromId(id, mode) {        
+        const r = await fetch("http://ddragon.leagueoflegends.com/cdn/12.6.1/data/en_US/champion.json");
+        const j = await r.json();
+        if (mode == 0) {
+            for (const [key, value] of Object.entries(j.data)) {
+                if (value.key == id) {
+                    return await value.name;
+                }
+            }
+        }
+        else {
+            for (const [key, value] of Object.entries(j.data)) {
+                if (value.key == id) {
+                    return await value.id;
+                }
+            }
+        }
+        
+    }
+
+    function setSummonerName() {
+        let str = document.getElementById("h1").value;
+        getData("summoner");
+    }
+    
+
+</script>
+
+<div>
+    <div style="margin-top: 50px">
+        <p>Enter your league name (EUW): </p>
+    </div>
+    <div style="margin-top: 50px">
+        <input type="text" id="h1" name="sName" value="" />
+    </div>
+    <div>
+        <button style="text-align: center; margin-top: 20px" onclick="setSummonerName()">Search</button>
+
+    </div>
+</div>
+<hr />
+<div class="container" style="font-size: 20px">
+    <div class="row">
+        <div class="col-md1">            
+            <span id="pfp" style=" padding-top: 10px; margin-left: 20px;">
+
+            </span>
+        </div>
+        <div class="col-md-4" style="margin-top: 10px; font-size: 30px">
+            <span id="summonerNameShow">
+
+            </span>
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col-md-2" style="margin-top: 10px; margin-left: 10px">
+            <span id="summonerLevelShow">
+
+            </span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4" style="margin-top: 10px; margin-left: 10px">
+            <span id="summonerRankSoloShow">
+
+            </span>
+        </div>
+        <div class="col-md-4" style="margin-top: 10px">
+            <span id="summonerRankFlexShow">
+
+            </span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4" style="margin-top: 10px; margin-left: 10px">
+            <span id="summonerRankSoloWinsShow">
+
+            </span>
+        </div>
+        <div class="col-md-4" style="margin-top: 10px">
+            <span id="summonerRankFlexWinsShow">
+
+            </span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4" style="margin-top: 10px; margin-left: 10px">
+            <span id="summonerRankSoloWRShow">
+
+            </span>
+        </div>
+        <div class="col-md-4" style="margin-top: 10px">
+            <span id="summonerRankFlexWRShow">
+
+            </span>
+        </div>
+    </div>
+    <hr>
+    <span id="champMasteryTxt"></span>
+    <div class="row">
+        <div class="col-md-1" style="margin-top: 10px">
+            <span id="ch1" style=" padding-top: 10px">
+
+            </span>
+        </div>
+        <div class="col-md-1" style="margin-top: 10px; margin-left: 100px">
+            <span id="ch2" style="padding-top: 10px">
+
+            </span>
+        </div>
+        <div class="col-md-1" style="margin-top: 10px; margin-left: 100px">
+            <span id="ch3" style="padding-top: 10px">
+
+            </span>
+        </div>
+        <div class="col-md-1" style="margin-top: 10px; margin-left: 100px">
+            <span id="ch4" style="padding-top: 10px">
+
+            </span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-2" style="margin-top: 10px; padding-left: 10px">
+            <span id="top1champ">
+                
+            </span>
+        </div>
+        <div class="col-md-2" style="margin-top: 10px">
+            <span id="top2champ">
+                
+            </span>
+        </div>
+        <div class="col-md-2" style="margin-top: 10px">
+            <span id="top3champ">
+                
+            </span>
+        </div>
+        <div class="col-md-2" style="margin-top: 10px">
+            <span id="top4champ">
+                
+            </span>
+        </div>
+    </div>
+    <hr>
+    <span id="lastMatchesTxt"></span>
+
+
+
+
+    <!--<div class="container1">
+        <div class="a1">
+            <span id="ch1" style="padding-top: 10px">
+
+            </span>
+        </div>
+        <div class="a2">
+            <span id="ch2" style="padding-top: 10px">
+
+            </span>
+        </div>
+        <div class="a3">
+            <span id="ch3" style="padding-top: 10px">
+
+            </span>
+        </div>
+        <div class="a4">
+            <span id="ch4" style="padding-top: 10px">
+
+            </span>
+        </div>
+        <div class="a5">
+            <span id="top1champ">
+                
+            </span>
+        </div>
+        <div class="a6">
+            <span id="top2champ">
+                
+            </span>
+        </div>
+        <div class="a7">
+            <span id="top3champ">
+                
+            </span>
+        </div>
+        <div class="a8">
+            <span id="top4champ">
+                
+            </span>
+        </div>
+    </div>-->
+</div>
+
+
+<!--https://ddragon.leagueoflegends.com/cdn/11.23.1/data/en_US/profileicon.json-->
+
+
+{% endblock %}
